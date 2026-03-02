@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Архитектура Системы Госзакупок</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #2563eb;
+            --bg: #0f172a;
+            --card-bg: #1e293b;
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+            --accent: #38bdf8;
+            --border: #334155;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 40px auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #fff 0%, var(--accent) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: var(--text-muted);
+        }
+
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 30px;
+            margin-bottom: 40px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+            transition: transform 0.2s ease;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent);
+        }
+
+        h2 {
+            font-size: 1.8rem;
+            color: var(--accent);
+            margin-top: 0;
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+
+        .mermaid {
+            background: white !important;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 20px 0;
+        }
+
+        .tech-stack {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+
+        .tech-item {
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 10px;
+            border-left: 4px solid var(--primary);
+        }
+
+        .tech-item strong {
+            display: block;
+            color: var(--accent);
+            margin-bottom: 5px;
+        }
+
+        .formula {
+            background: #000;
+            padding: 15px;
+            border-radius: 8px;
+            font-family: monospace;
+            color: #10b981;
+            font-size: 1.2rem;
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        .risk-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .risk-list li {
+            margin-bottom: 15px;
+            padding-left: 30px;
+            position: relative;
+        }
+
+        .risk-list li::before {
+            content: '⚠️';
+            position: absolute;
+            left: 0;
+        }
+
+        footer {
+            text-align: center;
+            margin-top: 60px;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Архитектура Системы Госзакупок</h1>
+            <p class="subtitle">Интеллектуальный анализ аномалий и справедливая оценка цен</p>
+        </header>
+
+        <main>
+            <section class="card">
+                <h2>1. Модульная Схема</h2>
+                <div class="mermaid">
+                    graph TD
+                        User((Пользователь)) <--> Web[Flask Web App]
+                        Web <--> Agent[AI Agent - LangChain]
+                        
+                        subgraph "Logic & Tools"
+                            Agent --> Tools[Custom Tools]
+                            Tools --> FP[Fair Price Engine]
+                            Tools --> Search[Semantic Vector Search]
+                        end
+                        
+                        subgraph "Data Layer"
+                            Search <--> DB[(PostgreSQL + pgvector)]
+                            FP <--> DB
+                            DB --- Marts[Analytical Marts]
+                        end
+                        
+                        subgraph "Batch Processing"
+                            Airflow[Apache Airflow] --> ETL[ETL Pipelines]
+                            ETL --> DB
+                            ETL --> Classify[ENSTRU Classifier]
+                        end
+                </div>
+            </section>
+
+            <section class="card">
+                <h2>2. Технологический Стек</h2>
+                <div class="tech-stack">
+                    <div class="tech-item">
+                        <strong>Интерфейс</strong>
+                        Flask, HTML5, CSS3, JS (Modern UI)
+                    </div>
+                    <div class="tech-item">
+                        <strong>Искусственный Интеллект</strong>
+                        LangChain, OpenAI (GPT-4o), ReAct Pattern
+                    </div>
+                    <div class="tech-item">
+                        <strong>База Данных</strong>
+                        PostgreSQL 16 + pgvector (Векторный поиск)
+                    </div>
+                    <div class="tech-item">
+                        <strong>Оркестрация</strong>
+                        Apache Airflow (ETL & ML Pipelines)
+                    </div>
+                </div>
+            </section>
+
+            <section class="card">
+                <h2>3. Аналитические Метрики</h2>
+                <p>Основная метрика — <strong>Fair Price</strong> (Справедливая цена), рассчитываемая по формуле:</p>
+                <div class="formula">
+                    Fair Price = Baseline × Region × Inflation × Seasonality
+                </div>
+                <ul>
+                    <li><strong>Baseline:</strong> Медианная цена категории ЕНСТРУ.</li>
+                    <li><strong>Region:</strong> Коэффициент региона (КАТО).</li>
+                    <li><strong>Inflation:</strong> Поправка на дату заключения контракта.</li>
+                    <li><strong>Seasonality:</strong> Учет сезонных колебаний спроса.</li>
+                </ul>
+            </section>
+
+            <section class="card">
+                <h2>4. Риски и Ограничения</h2>
+                <ul class="risk-list">
+                    <li><strong>Качество данных:</strong> Ошибки в наименованиях в первоисточнике.</li>
+                    <li><strong>LLM Hallucinations:</strong> Минимизированы через строгий SQL Execution.</li>
+                    <li><strong>Задержка:</strong> Аналитика базируется на подписанных контрактах (лаг 1-2 недели).</li>
+                </ul>
+            </section>
+        </main>
+
+        <footer>
+            <p>&copy; 2026 Система Аналитики Госзакупок РК</p>
+        </footer>
+    </div>
+    <script>
+        mermaid.initialize({ startOnLoad: true, theme: 'default' });
+    </script>
+</body>
+</html>

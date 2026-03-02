@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="ru">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Бот Госзакупок — Анализ госзакупок РК</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    :root {
+      --bg: #0f1117;
+      --surface: #1a1d27;
+      --surface2: #22263a;
+      --border: #2e3347;
+      --accent: #4f8ef7;
+      --accent2: #7c3aed;
+      --user-bubble: linear-gradient(135deg, #4f8ef7 0%, #6366f1 100%);
+      --bot-bubble: #1e2235;
+      --text: #e2e8f0;
+      --text-muted: #8892a4;
+      --radius: 16px;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100dvh;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    /* ---- Header ---- */
+    header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 14px 24px;
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, .4);
+    }
+
+    .logo {
+      width: 40px;
+      height: 40px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 20px;
+      flex-shrink: 0;
+    }
+
+    .header-info h1 {
+      font-size: 16px;
+      font-weight: 700;
+    }
+
+    .header-info p {
+      font-size: 12px;
+      color: var(--text-muted);
+      margin-top: 1px;
+    }
+
+    .status-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #22c55e;
+      box-shadow: 0 0 0 3px rgba(34, 197, 94, .2);
+      margin-left: auto;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        box-shadow: 0 0 0 3px rgba(34, 197, 94, .2);
+      }
+
+      50% {
+        box-shadow: 0 0 0 6px rgba(34, 197, 94, .08);
+      }
+    }
+
+    /* ---- Messages area ---- */
+    #messages {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 0;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      scroll-behavior: smooth;
+    }
+
+    #messages::-webkit-scrollbar {
+      width: 4px;
+    }
+
+    #messages::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    #messages::-webkit-scrollbar-thumb {
+      background: var(--border);
+      border-radius: 4px;
+    }
+
+    /* ---- Bubble wrapper ---- */
+    .msg-row {
+      display: flex;
+      padding: 0 20px;
+      animation: fadeUp .25s ease;
+    }
+
+    .msg-row.user {
+      justify-content: flex-end;
+    }
+
+    .msg-row.bot {
+      justify-content: flex-start;
+      align-items: flex-end;
+      gap: 8px;
+    }
+
+    @keyframes fadeUp {
+      from {
+        opacity: 0;
+        transform: translateY(8px);
+      }
+
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 15px;
+      flex-shrink: 0;
+    }
+
+    .bubble {
+      max-width: min(520px, 78vw);
+      padding: 12px 16px;
+      border-radius: var(--radius);
+      font-size: 14px;
+      line-height: 1.65;
+      white-space: pre-wrap;
+      word-break: break-word;
+    }
+
+    .msg-row.user .bubble {
+      background: var(--user-bubble);
+      color: #fff;
+      border-bottom-right-radius: 4px;
+    }
+
+    .msg-row.bot .bubble {
+      background: var(--bot-bubble);
+      border: 1px solid var(--border);
+      border-bottom-left-radius: 4px;
+      color: var(--text);
+    }
+
+    /* ---- Typing indicator ---- */
+    .typing-indicator {
+      display: flex;
+      gap: 5px;
+      padding: 10px 14px;
+      background: var(--bot-bubble);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      border-bottom-left-radius: 4px;
+      width: fit-content;
+    }
+
+    .typing-indicator span {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--text-muted);
+      animation: bounce .9s infinite;
+    }
+
+    .typing-indicator span:nth-child(2) {
+      animation-delay: .18s;
+    }
+
+    .typing-indicator span:nth-child(3) {
+      animation-delay: .36s;
+    }
+
+    @keyframes bounce {
+
+      0%,
+      60%,
+      100% {
+        transform: translateY(0);
+      }
+
+      30% {
+        transform: translateY(-5px);
+      }
+    }
+
+    /* ---- Suggestions ---- */
+    #suggestions {
+      padding: 8px 20px;
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      flex-shrink: 0;
+    }
+
+    .chip {
+      cursor: pointer;
+      font-size: 12px;
+      padding: 6px 12px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--text-muted);
+      transition: all .2s;
+      user-select: none;
+    }
+
+    .chip:hover {
+      border-color: var(--accent);
+      color: var(--accent);
+      background: rgba(79, 142, 247, .08);
+    }
+
+    /* ---- Input area ---- */
+    #input-area {
+      padding: 12px 20px 16px;
+      background: var(--surface);
+      border-top: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+
+    #input-form {
+      display: flex;
+      gap: 10px;
+      align-items: flex-end;
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 8px 8px 8px 16px;
+      transition: border-color .2s;
+    }
+
+    #input-form:focus-within {
+      border-color: var(--accent);
+    }
+
+    #user-input {
+      flex: 1;
+      background: transparent;
+      border: none;
+      outline: none;
+      color: var(--text);
+      font-family: inherit;
+      font-size: 14px;
+      line-height: 1.5;
+      resize: none;
+      max-height: 120px;
+      min-height: 24px;
+      overflow-y: auto;
+    }
+
+    #user-input::placeholder {
+      color: var(--text-muted);
+    }
+
+    #send-btn {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      border: none;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      color: #fff;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      transition: opacity .2s, transform .15s;
+      font-size: 15px;
+    }
+
+    #send-btn:hover {
+      opacity: .88;
+      transform: scale(1.07);
+    }
+
+    #send-btn:active {
+      transform: scale(.95);
+    }
+
+    #send-btn:disabled {
+      opacity: .35;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    /* ---- Welcome message ---- */
+    #welcome {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 12px;
+      padding: 40px 20px;
+      text-align: center;
+      color: var(--text-muted);
+      flex: 1;
+    }
+
+    #welcome .big-logo {
+      width: 64px;
+      height: 64px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, var(--accent), var(--accent2));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 32px;
+      margin-bottom: 4px;
+    }
+
+    #welcome h2 {
+      font-size: 20px;
+      color: var(--text);
+    }
+
+    #welcome p {
+      font-size: 14px;
+      max-width: 400px;
+    }
+  </style>
+</head>
+
+<body>
+
+  <header>
+    <div class="logo">🔍</div>
+    <div class="header-info">
+      <h1>Бот Госзакупок — Госзакупки РК</h1>
+      <p>ИИ-агент анализа государственных закупок</p>
+    </div>
+    <div class="status-dot" title="Агент активен"></div>
+  </header>
+
+  <div id="messages">
+    <div id="welcome">
+      <div class="big-logo">🔍</div>
+      <h2>Привет! Я Бот Государственных закупок</h2>
+      <p>Анализирую государственные закупки РК: выявляю аномалии цен, нетипичные объёмы закупок и оцениваю
+        «справедливость»
+        сделок.</p>
+    </div>
+  </div>
+
+  <div id="suggestions">
+    <span class="chip" onclick="sendChip(this)">🔎 Аномалии по канцелярии</span>
+    <span class="chip" onclick="sendChip(this)">📊 Завышение цен на ноутбуки</span>
+    <span class="chip" onclick="sendChip(this)">🏢 Рейтинг токсичности МОН</span>
+    <span class="chip" onclick="sendChip(this)">📦 Подозрительные объёмы закупок</span>
+  </div>
+
+  <div id="input-area">
+    <form id="input-form" onsubmit="sendMessage(event)">
+      <textarea id="user-input" placeholder="Введите запрос... (Enter — отправить, Shift+Enter — перенос строки)"
+        rows="1" autofocus></textarea>
+      <button type="submit" id="send-btn" title="Отправить">➤</button>
+    </form>
+  </div>
+
+  <script>
+    const messagesEl = document.getElementById('messages');
+    const inputEl = document.getElementById('user-input');
+    const sendBtn = document.getElementById('send-btn');
+    const welcome = document.getElementById('welcome');
+    const suggestEl = document.getElementById('suggestions');
+
+    /* Auto-resize textarea */
+    inputEl.addEventListener('input', () => {
+      inputEl.style.height = 'auto';
+      inputEl.style.height = Math.min(inputEl.scrollHeight, 120) + 'px';
+    });
+
+    /* Enter to send, Shift+Enter for newline */
+    inputEl.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        document.getElementById('input-form').dispatchEvent(new Event('submit'));
+      }
+    });
+
+    function scrollBottom() {
+      messagesEl.scrollTo({ top: messagesEl.scrollHeight, behavior: 'smooth' });
+    }
+
+    function addMessage(role, text) {
+      // Hide welcome screen on first message
+      if (welcome) welcome.style.display = 'none';
+
+      const row = document.createElement('div');
+      row.className = `msg-row ${role}`;
+
+      if (role === 'bot') {
+        const av = document.createElement('div');
+        av.className = 'avatar';
+        av.textContent = '🔍';
+        row.appendChild(av);
+      }
+
+      const bubble = document.createElement('div');
+      bubble.className = 'bubble';
+      bubble.textContent = text;
+      row.appendChild(bubble);
+
+      messagesEl.appendChild(row);
+      scrollBottom();
+      return row;
+    }
+
+    function addTyping() {
+      if (welcome) welcome.style.display = 'none';
+      const row = document.createElement('div');
+      row.className = 'msg-row bot';
+      const av = document.createElement('div');
+      av.className = 'avatar'; av.textContent = '🔍';
+      row.appendChild(av);
+      const ind = document.createElement('div');
+      ind.className = 'typing-indicator';
+      ind.innerHTML = '<span></span><span></span><span></span>';
+      row.appendChild(ind);
+      messagesEl.appendChild(row);
+      scrollBottom();
+      return row;
+    }
+
+    function sendChip(el) {
+      inputEl.value = el.textContent.replace(/^[^\s]+\s/, '').trim();
+      inputEl.dispatchEvent(new Event('input'));
+      sendMessage();
+    }
+
+    async function sendMessage(e) {
+      if (e) e.preventDefault();
+      const text = inputEl.value.trim();
+      if (!text || sendBtn.disabled) return;
+
+      // Hide chips after first question
+      suggestEl.style.display = 'none';
+
+      addMessage('user', text);
+      inputEl.value = '';
+      inputEl.style.height = 'auto';
+      sendBtn.disabled = true;
+
+      const typingRow = addTyping();
+
+      const sleep = ms => new Promise(r => setTimeout(r, ms));
+      let lastErr;
+      for (let attempt = 1; attempt <= 3; attempt++) {
+        try {
+          const res = await fetch('/chat', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ message: text })
+          });
+          const data = await res.json();
+          typingRow.remove();
+          addMessage('bot', data.reply || data.error || 'Нет ответа.');
+          lastErr = null;
+          break;
+        } catch (err) {
+          lastErr = err;
+          if (attempt < 3) await sleep(1500);
+        }
+      }
+      if (lastErr) {
+        typingRow.remove();
+        addMessage('bot', '❌ Ошибка соединения с сервером. Сервер Flask не отвечает.');
+      }
+
+      sendBtn.disabled = false;
+      inputEl.focus();
+    }
+  </script>
+</body>
+
+</html>
